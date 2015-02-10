@@ -1,0 +1,7 @@
+-q normal@@intel
+-cwd
+-m n
+-j yes
+-r yes
+-notify
+-l mem_req=950M
