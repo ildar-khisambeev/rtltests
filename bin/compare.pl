@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 
-# file: compare.pl,  v2.09
-# date: 2014-11-13
+# file: compare.pl,  v2.10
+# date: 2015-02-23
 # by:   Ildar Khisambeev, ildar@cs.niisi.ras.ru
 # aim:  compare vmips log with the set of RTL logs;
 
@@ -21,13 +21,14 @@ use strict;
 #	2.07	2014-07-25	fix disk files path;
 #	2.08	2014-09-17	enlarge buffers, fix diskfiles creation;
 #	2.09	2014-11-13	do not compare cache bypass lines;
+#	2.10	2015-02-23	update CPV templates, compare CPV logs by default;
+#						ATTENTION: CPV template is named 'c3rf', but log files are named 'log*_cp2*';
 # TODO: 
-#	- update CP2 (CPV?) templates, see actual compare_cp2.pl;
 #	- check Sayapin's "cache writethrough" mode;
 #	- "warm tube sound" mode: report ALL mismatches in order of appearance (--wtf);
 #	- embed frag_cutter;
 #	- check 4-way icache compatibility;
-#	- add other squeezer formats: cp0, cp3, dma;
+#	- add other squeezer formats: cp0, dma;
 #	- save sorted files by request via some option;
 
 #################################   OPTIONS   ##################################
@@ -87,7 +88,7 @@ if ($noc{inst}) {
 $noc{xz} = 1;
 $noc{icch} = 1;	# remove/comment this line for use with projects with icache log;
 $noc{c2rf} = 1;	# remove/comment this line for use with projects with old cp2;
-$noc{c3rf} = 1;	# remove/comment this line for use with projects with cp3;
+#$noc{c3rf} = 1;	# remove/comment this line for use with projects with cp3;
 
 #############################   LIST TO SQUEEZE   ##############################
 $sq_in[0]="all" if (($#sq_in == 0) and ($sq_in[0] eq ""));						# special case of short notation ('compare.pl -s' shall squeeze all)
@@ -162,7 +163,7 @@ $log2{fprf}	= qr/^(?:fprf:)?\s*(\d+)?\s*\bfr(\d{2})=([\da-fA-FxX]{16})(?:\s+C1_S
 #		  $1 - inum, $2 - regnum, $3 - data, $4 - fcsr value (if any)
 $log2{c2rf}	= qr/^(?:c2rf:)?\s*(\d+)?\s*\bs\[(\d)\]\s+c(\d{2})=([\da-fA-FxX]{16})(?:\s+CCSR=([\da-fA-FxX]{8}))?\s*$/;
 #		  $1 - inum, $2 - set, $3 - regnum, $4 - data, $5 - ccsr value (if any)
-$log2{c3rf}	= qr/^(?:c3rf:)?\s*(\d+)?\s*\bc(\d{2})=([\da-fA-FxX]{32})(?:\s+CCSR=([\da-fA-FxX]{8}))?\s*$/;
+$log2{c3rf}	= qr/^(?:c3rf:)?\s*(\d+)?\s*\bc(\d{2})=([\da-fA-FxX]{32})(?:\s+CMCSR=([\da-fA-FxX]{8}))?\s*$/;
 #		  $1 - inum, $2 - regnum, $3 - data, $4 - ccsr value (if any)
 $log2{dcch}	= qr/^(?:dcch:)?\s*(\d+)?\s*\b([\da-fA-FxX]{8}|snooping)\s+c_adr=([\da-fA-FxX]{2})\s+no_cache=([01xX])\s+attr=([01xX]{3})\s+PA=([\da-fA-FxX]{9})\s+hitv=([01xX]{4})\s+repl=([01xX]{4})\s+WS=([01xX]{6})\s*$/;
 #		  $1 - inum, $2 - opcode, $3 - cline, $4 - nocch, $5 - policy, $6 - PA, $7 - hitv, $8 - repl, $9 - WS
@@ -272,6 +273,8 @@ open FPR,($sq{fprf} ? (print ", fpr" and "> ${path1}log1_fpr.txt") : "> /dev/nul
 		or die "Cannot open ${path1}log1_fpr.txt to write, closed";
 open CP2,($sq{c2rf} ? (print ", cp2" and "> ${path1}log1_cp2.txt") : "> /dev/null")
 		or die "Cannot open ${path1}log1_cp2.txt to write, closed";
+open CP2,($sq{c3rf} ? (print ", cp3 (=cpv)" and "> ${path1}log1_cp2.txt") : "> /dev/null")
+		or die "Cannot open ${path1}log1_cp2.txt to write, closed";
 open CCH,($sq{dcch} ? (print ", dcache, L2cache" and "> ${path1}log1_cache.txt") : "> /dev/null")
 		or die "Cannot open ${path1}log1_cache.txt to write, closed";
 open ICH,($sq{icch} ? (print ", icache" and "> ${path1}log1_icache.txt") : "> /dev/null")
@@ -299,6 +302,7 @@ VLINE:	while (<ALL>) {
 	if (/$log1{gprf}/) { print GPR "$1\tPC=0x$va    $ins\t$2=$3\n"; next VLINE; }	# familiar format, but takes slightly longer
 	if (/$log1{fprf}/) { print FPR $_; next VLINE; }
 	if (/$log1{c2rf}/) { print CP2 $_; next VLINE; }
+	if (/$log1{c3rf}/) { print CP2 $_; next VLINE; }
 	if (/$log1{dcch}/) { print CCH $_; next VLINE; }
 	if (/$log1{icch}/) { print ICH $_; next VLINE; }
 	if (/$log1{l2ch}/) { print CCH $_; next VLINE; }
