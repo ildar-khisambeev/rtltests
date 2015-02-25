@@ -2,7 +2,7 @@
 use strict;
 
 # file: compare.pl,  v2.10
-# date: 2015-02-23
+# date: 2015-02-25
 # by:   Ildar Khisambeev, ildar@cs.niisi.ras.ru
 # aim:  compare vmips log with the set of RTL logs;
 
@@ -21,7 +21,7 @@ use strict;
 #	2.07	2014-07-25	fix disk files path;
 #	2.08	2014-09-17	enlarge buffers, fix diskfiles creation;
 #	2.09	2014-11-13	do not compare cache bypass lines;
-#	2.10	2015-02-23	update CPV templates, compare CPV logs by default;
+#	2.10	2015-02-25	update CPV templates, compare CPV logs by default;
 #						ATTENTION: CPV template is named 'c3rf', but log files are named 'log*_cp2*';
 # TODO: 
 #	- check Sayapin's "cache writethrough" mode;
@@ -163,7 +163,7 @@ $log2{fprf}	= qr/^(?:fprf:)?\s*(\d+)?\s*\bfr(\d{2})=([\da-fA-FxX]{16})(?:\s+C1_S
 #		  $1 - inum, $2 - regnum, $3 - data, $4 - fcsr value (if any)
 $log2{c2rf}	= qr/^(?:c2rf:)?\s*(\d+)?\s*\bs\[(\d)\]\s+c(\d{2})=([\da-fA-FxX]{16})(?:\s+CCSR=([\da-fA-FxX]{8}))?\s*$/;
 #		  $1 - inum, $2 - set, $3 - regnum, $4 - data, $5 - ccsr value (if any)
-$log2{c3rf}	= qr/^(?:c3rf:)?\s*(\d+)?\s*\bc(\d{2})=([\da-fA-FxX]{32})(?:\s+CMCSR=([\da-fA-FxX]{8}))?\s*$/;
+$log2{c3rf}	= qr/^(?:c2rf:)?\s*(\d+)?\s*\bc(\d{2})=([\da-fA-FxX]{32})(?:\s+CCSR=([\da-fA-FxX]{8}))?\s*$/;
 #		  $1 - inum, $2 - regnum, $3 - data, $4 - ccsr value (if any)
 $log2{dcch}	= qr/^(?:dcch:)?\s*(\d+)?\s*\b([\da-fA-FxX]{8}|snooping)\s+c_adr=([\da-fA-FxX]{2})\s+no_cache=([01xX])\s+attr=([01xX]{3})\s+PA=([\da-fA-FxX]{9})\s+hitv=([01xX]{4})\s+repl=([01xX]{4})\s+WS=([01xX]{6})\s*$/;
 #		  $1 - inum, $2 - opcode, $3 - cline, $4 - nocch, $5 - policy, $6 - PA, $7 - hitv, $8 - repl, $9 - WS
