@@ -2,13 +2,14 @@
 use strict;
 
 # aim:		convert vmips initstate file to RTL hex files to restore data
-# version:	1.1, 2013-09-25
+# version:	1.2, 2015-02-19
 # author:	Ildar Khisambeev <ildar@cs.niisi.ras.ru>
 # run:		./reg_v2h.pl <dumpfile>
 
 #version history
 #1.0, 2013-07-23	- release; restore TLB data only; create files RAM_64x59_jtlb_answ.hex and RAM_64x46_jtlb_acc.hex;
 #1.1, 2013-09-25	- restore 4 hex files: alu.hex, fpu.hex, cp0.hex and tlb.hex
+#1.2, 2015-02-19	- restore cpv.hex
 
 $|=1;   # forces a buffer flush after every write or print;
 
@@ -33,6 +34,8 @@ if ( not defined $ARGV[0])	{
 
 open (REG, "$file") or die "Can't open file '$file', closed";
 
+my @cmgr = ();
+my $cmcr31;
 my @gpr = ();
 my ($hi,$lo,$pc);
 my @fpr = ();
@@ -56,6 +59,8 @@ while (<REG>) {
 	if (/^\s*f(\d{2})=0x([\da-fA-F]{16})/) { $fpr[$1] = $2; next; }
 	if (/^\s*fcr00=0x([\da-fA-F]{16})/) { $fir = $1; next; }
 	if (/^\s*fcr31=0x([\da-fA-F]{16})/) { $fcsr = $1; next; }
+	if (/^\s*cmgr(\d{2})=0x([\da-fA-F]{32})/) { $cmgr[$1] = $2; next; }
+	if (/^\s*cmcr31=0x([\da-fA-F]{8})/) { $cmcr31 = $1; next; }
 }
 
 
@@ -79,6 +84,15 @@ for (0..31) {
 not defined $fir and die "FIR not found" or print FPU $fir,"\n";
 not defined $fcsr and die "FCSR not found" or print FPU $fcsr,"\n";
 close FPU;
+print "done!\n";
+
+print "Converting CPV...";
+open (CPV, "> cpv.hex")  or die "Cannot open cpv.hex for write, closed";
+for (0..63) {
+	not defined $cmgr[$_] and die "cpv reg $_ not found" or print CPV $cmgr[$_],"\n";
+}
+not defined $cmcr31 and die "CPV ctrl reg not found" or print CPV "0"x24,$cmcr31,"\n";
+close CPV;
 print "done!\n";
 
 print "Converting CP0...";
